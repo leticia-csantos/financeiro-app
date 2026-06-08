@@ -10,7 +10,7 @@ type Props = {
   mesAtual: string
 }
 
-const CATEGORIAS_SUGERIDAS = ['Mercado', 'Transporte', 'Lazer', 'Saúde', 'Compras', 'Outros']
+const CATEGORIAS_SUGERIDAS = ['Supérfluo', 'Estudo', 'Saúde', 'Emocional', 'Espiritual', 'Outros']
 
 export default function VariavelModal({ onClose, onSave, initial, mesAtual }: Props) {
   const [form, setForm] = useState({

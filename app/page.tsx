@@ -61,8 +61,9 @@ export default function Home() {
   const totalFixos = totalMes(fixosMes)
   const totalParcelas = totalMes(parcelasMes)
   const totalVariaveis = totalValor(variaveisMes)
-  const saldo = totalGanhos - totalFixos - totalParcelas - totalVariaveis
-  const percentual = percentualComprometido(totalGanhos, totalFixos + totalParcelas + totalVariaveis)
+  const totalSaidas = totalFixos + totalParcelas + totalVariaveis
+  const saldo = totalGanhos - totalSaidas
+  const percentual = percentualComprometido(totalGanhos, totalSaidas)
 
   const meses = getMesesDisponiveis(gastos)
   const mesAtual = format(new Date(), 'yyyy-MM')
@@ -254,6 +255,26 @@ export default function Home() {
         <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 12 }}>
           {percentual}% da renda comprometida
         </p>
+
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: 28, marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              total de entradas
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 500, color: 'var(--green)' }}>
+              {formatCurrency(totalGanhos)}
+            </p>
+          </div>
+          <div style={{ width: 1, background: 'var(--border)' }} />
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              total de gastos
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 500, color: 'var(--red)' }}>
+              {formatCurrency(totalSaidas)}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* KPI cards */}
