@@ -28,6 +28,8 @@ export type Gasto = {
   mes_inicio?: string // 'YYYY-MM'
   // recorrente
   ativo: boolean
+  // tags transversais (ex: 'Estudo', 'Saúde'), independentes do tipo
+  tags?: string[]
   created_at: string
 }
 

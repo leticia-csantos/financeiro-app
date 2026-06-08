@@ -7,7 +7,7 @@ import {
 import { Gasto, Ganho, Variavel } from '@/lib/supabase'
 import {
   filtrarGastosPorMes, filtrarGanhosPorMes, filtrarVariaveisPorMes,
-  totalMes, totalValor, formatCurrency, agruparPorCategoria, percentualComprometido,
+  totalMes, totalValor, formatCurrency, agruparPorTag, percentualComprometido,
   GastoMes, getMesesDisponiveis,
 } from '@/lib/financeiro'
 import GastoModal from '@/components/GastoModal'
@@ -55,7 +55,7 @@ export default function Home() {
   const parcelasMes = gastosMes.filter((g) => g.tipo === 'parcelado')
   const ganhosMes = filtrarGanhosPorMes(ganhos, mesSelecionado)
   const variaveisMes = filtrarVariaveisPorMes(variaveis, mesSelecionado)
-  const categorias = agruparPorCategoria(variaveisMes)
+  const categorias = agruparPorTag(gastosMes, variaveisMes)
 
   const totalGanhos = totalValor(ganhosMes)
   const totalFixos = totalMes(fixosMes)
@@ -187,7 +187,7 @@ export default function Home() {
   return (
     <main style={{ minHeight: '100vh', padding: '24px 16px 64px', maxWidth: 760, margin: '0 auto' }}>
       {/* Header */}
-      <div className="animate-fade" style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div className="animate-fade" style={{ position: 'relative', zIndex: 50, marginBottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--green)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 4 }}>
             controle financeiro
@@ -202,7 +202,27 @@ export default function Home() {
             <Plus size={16} /> Novo lançamento
           </button>
           {novoMenuAberto && (
-            <div className="card animate-fade" style={{ position: 'absolute', right: 0, top: '110%', zIndex: 30, width: 200, padding: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <>
+              <div
+                onClick={() => setNovoMenuAberto(false)}
+                style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+              />
+              <div
+                className="card"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 'calc(100% + 8px)',
+                  zIndex: 70,
+                  width: 220,
+                  padding: 6,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  background: 'var(--bg-card)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.55)',
+                }}
+              >
               {[
                 { id: 'gasto' as const, label: 'Gasto fixo / parcelado', icon: <CreditCard size={14} /> },
                 { id: 'ganho' as const, label: 'Ganho', icon: <TrendingUp size={14} /> },
@@ -221,7 +241,8 @@ export default function Home() {
                   {opt.icon} {opt.label}
                 </button>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -338,6 +359,9 @@ export default function Home() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                       <span style={{ fontWeight: 500, fontSize: 14, color: g.ativo ? 'var(--text)' : 'var(--text-muted)' }}>{g.nome}</span>
                       <span className={`badge ${g.ativo ? 'badge-blue' : 'badge-red'}`}>{g.ativo ? 'ativo' : 'inativo'}</span>
+                      {g.tags?.map((t) => (
+                        <span key={t} className="badge badge-green">{t}</span>
+                      ))}
                     </div>
                     <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>dia {g.vencimento_dia} · {formatCurrency(g.valor)}/mês</p>
                   </div>
@@ -381,15 +405,15 @@ export default function Home() {
           <LoadingRow />
         ) : categorias.length === 0 ? (
           <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '12px 0' }}>
-            Nenhum gasto variável lançado
+            Nenhum gasto com tag lançado neste mês
           </p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {categorias.map((c) => (
-              <div key={c.categoria} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span className="badge badge-blue" style={{ minWidth: 90, justifyContent: 'center' }}>{c.categoria}</span>
+              <div key={c.tag} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span className="badge badge-blue" style={{ minWidth: 90, justifyContent: 'center' }}>{c.tag}</span>
                 <div style={{ flex: 1, height: 6, borderRadius: 4, background: 'var(--bg-hover)', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.min(100, Math.round((c.total / (totalVariaveis || 1)) * 100))}%`, background: 'var(--blue)', borderRadius: 4 }} />
+                  <div style={{ height: '100%', width: `${Math.min(100, Math.round((c.total / (categorias[0].total || 1)) * 100))}%`, background: 'var(--blue)', borderRadius: 4 }} />
                 </div>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', whiteSpace: 'nowrap' }}>{formatCurrency(c.total)}</span>
               </div>
@@ -432,7 +456,16 @@ export default function Home() {
                   const gm = g as GastoMes
                   return (
                     <tr key={g.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '10px', fontWeight: 500 }}>{g.nome}</td>
+                      <td style={{ padding: '10px', fontWeight: 500 }}>
+                        {g.nome}
+                        {!!g.tags?.length && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                            {g.tags.map((t) => (
+                              <span key={t} className="badge badge-green" style={{ fontWeight: 400 }}>{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
                       <td style={{ padding: '10px' }}>
                         <span className="badge badge-yellow">
                           {verTodasParcelas

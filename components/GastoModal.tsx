@@ -10,6 +10,8 @@ type Props = {
   initial?: Partial<Gasto>
 }
 
+const TAGS_SUGERIDAS = ['Supérfluo', 'Estudo', 'Saúde', 'Emocional', 'Espiritual']
+
 export default function GastoModal({ onClose, onSave, initial }: Props) {
   const hoje = format(new Date(), 'yyyy-MM')
   const [form, setForm] = useState({
@@ -20,9 +22,26 @@ export default function GastoModal({ onClose, onSave, initial }: Props) {
     parcelas_total: initial?.parcelas_total?.toString() ?? '1',
     mes_inicio: initial?.mes_inicio ?? hoje,
     ativo: initial?.ativo ?? true,
+    tags: initial?.tags ?? [] as string[],
   })
+  const [novaTag, setNovaTag] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  function toggleTag(tag: string) {
+    setForm((f) =>
+      f.tags.includes(tag)
+        ? { ...f, tags: f.tags.filter((t) => t !== tag) }
+        : { ...f, tags: [...f.tags, tag] }
+    )
+  }
+
+  function adicionarTagPersonalizada() {
+    const tag = novaTag.trim()
+    if (!tag || form.tags.includes(tag)) return
+    setForm((f) => ({ ...f, tags: [...f.tags, tag] }))
+    setNovaTag('')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,6 +60,7 @@ export default function GastoModal({ onClose, onSave, initial }: Props) {
         parcelas_total: form.tipo === 'parcelado' ? parseInt(form.parcelas_total) : undefined,
         mes_inicio: form.tipo === 'parcelado' ? form.mes_inicio : undefined,
         ativo: form.ativo,
+        tags: form.tags,
       })
       onClose()
     } catch (err: any) {
@@ -105,6 +125,73 @@ export default function GastoModal({ onClose, onSave, initial }: Props) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Tags (independentes do tipo) */}
+          <div>
+            <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 6 }}>
+              Tags
+            </label>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>
+              Marque quantas quiser — independem do tipo (ex: parcelado + Estudo)
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+              {TAGS_SUGERIDAS.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => toggleTag(t)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 20,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    background: form.tags.includes(t) ? 'var(--green)' : 'var(--bg)',
+                    color: form.tags.includes(t) ? '#0d0f12' : 'var(--text-muted)',
+                    border: `1px solid ${form.tags.includes(t) ? 'var(--green)' : 'var(--border)'}`,
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                className="input-base"
+                placeholder="ou digite uma tag personalizada"
+                value={novaTag}
+                onChange={(e) => setNovaTag(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    adicionarTagPersonalizada()
+                  }
+                }}
+              />
+              <button type="button" className="btn btn-ghost" onClick={adicionarTagPersonalizada}>
+                <Plus size={14} />
+              </button>
+            </div>
+            {form.tags.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                {form.tags.map((t) => (
+                  <span
+                    key={t}
+                    className="badge badge-green"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                  >
+                    {t}
+                    <button
+                      type="button"
+                      onClick={() => toggleTag(t)}
+                      style={{ display: 'flex', background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0 }}
+                    >
+                      <X size={11} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Valor */}

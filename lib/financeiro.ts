@@ -77,24 +77,32 @@ export function totalValor(itens: { valor: number }[]): number {
   return itens.reduce((acc, i) => acc + i.valor, 0)
 }
 
-export type CategoriaResumo = {
-  categoria: string
+export type TagResumo = {
+  tag: string
   total: number
-  itens: Variavel[]
 }
 
 /**
- * Agrupa gastos variáveis por categoria, somando os valores.
+ * Agrupa gastos e gastos variáveis por tag, somando os valores.
+ * As tags são transversais ao tipo do gasto (ex: um gasto parcelado
+ * pode estar marcado com a tag "Estudo"); a categoria do gasto
+ * variável também é tratada como uma tag.
  */
-export function agruparPorCategoria(variaveis: Variavel[]): CategoriaResumo[] {
-  const mapa = new Map<string, Variavel[]>()
-  variaveis.forEach((v) => {
-    const lista = mapa.get(v.categoria) ?? []
-    lista.push(v)
-    mapa.set(v.categoria, lista)
+export function agruparPorTag(gastos: GastoMes[], variaveis: Variavel[]): TagResumo[] {
+  const mapa = new Map<string, number>()
+
+  gastos.forEach((g) => {
+    ;(g.tags ?? []).forEach((tag) => {
+      mapa.set(tag, (mapa.get(tag) ?? 0) + g.valor)
+    })
   })
+
+  variaveis.forEach((v) => {
+    mapa.set(v.categoria, (mapa.get(v.categoria) ?? 0) + v.valor)
+  })
+
   return Array.from(mapa.entries())
-    .map(([categoria, itens]) => ({ categoria, total: totalValor(itens), itens }))
+    .map(([tag, total]) => ({ tag, total }))
     .sort((a, b) => b.total - a.total)
 }
 

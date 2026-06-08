@@ -12,8 +12,13 @@ create table if not exists gastos (
   mes_inicio text, -- formato 'YYYY-MM'
   -- apenas para recorrentes
   ativo boolean not null default true,
+  -- tags transversais (ex: 'Estudo', 'Saúde'), independentes do tipo (parcelado/recorrente)
+  tags text[] not null default '{}',
   created_at timestamptz default now()
 );
+
+-- Caso a tabela "gastos" já exista de uma versão anterior, garante a coluna de tags
+alter table gastos add column if not exists tags text[] not null default '{}';
 
 -- Habilitar RLS (Row Level Security) - acesso público para este app pessoal
 alter table gastos enable row level security;
