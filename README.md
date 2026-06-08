@@ -4,9 +4,9 @@ Controle de gastos com parcelas automáticas. Deploy no Vercel + banco no Supaba
 
 ---
 
-## 🚀 Deploy em 5 passos
+## 🚀 Deploy rápido
 
-### 1. Supabase (banco de dados)
+### 1. Supabase (banco de dados) — faça isso primeiro
 
 1. Acesse [supabase.com](https://supabase.com) e crie uma conta gratuita
 2. Crie um novo projeto
@@ -15,16 +15,13 @@ Controle de gastos com parcelas automáticas. Deploy no Vercel + banco no Supaba
    - `Project URL`
    - `anon public` key
 
-### 2. Vercel (deploy)
+### 2. Vercel — um clique
 
-1. Acesse [vercel.com](https://vercel.com) e conecte com sua conta GitHub
-2. Faça upload deste projeto no GitHub (ou arraste na interface do Vercel)
-3. Durante o deploy, em **Environment Variables**, adicione:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL = https://SEU_PROJETO.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY = sua_anon_key_aqui
-   ```
-4. Clique em **Deploy** ✅
+Clique no botão abaixo. O Vercel já importa este repositório, detecta o Next.js sozinho e só vai te pedir para colar as duas chaves do Supabase que você copiou acima:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/leticia-csantos/financeiro-app/tree/claude/vercel-deployment-y3uI9&env=NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY&envDescription=Chaves%20do%20seu%20projeto%20Supabase%20(Settings%20%E2%86%92%20API)&envLink=https://supabase.com/dashboard/project/_/settings/api&project-name=financeiro-app&repository-name=financeiro-app)
+
+Cole as duas variáveis quando solicitado e clique em **Deploy**. Pronto — sem precisar configurar nada manualmente. ✅
 
 ---
 
