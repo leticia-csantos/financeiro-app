@@ -1,4 +1,4 @@
-import { Gasto } from './supabase'
+import { Gasto, Ganho, Variavel } from './supabase'
 import { addMonths, parse, format, isAfter, isBefore, startOfMonth } from 'date-fns'
 
 export type GastoMes = Gasto & {
@@ -56,6 +56,54 @@ export function formatCurrency(value: number): string {
     style: 'currency',
     currency: 'BRL',
   }).format(value)
+}
+
+/**
+ * Retorna os ganhos aplicáveis a um mês: recorrentes sempre aparecem,
+ * pontuais apenas no mês de referência deles.
+ */
+export function filtrarGanhosPorMes(ganhos: Ganho[], mesAno: string): Ganho[] {
+  return ganhos.filter((g) => g.recorrente || g.mes_referencia === mesAno)
+}
+
+/**
+ * Retorna os gastos variáveis lançados em um mês específico.
+ */
+export function filtrarVariaveisPorMes(variaveis: Variavel[], mesAno: string): Variavel[] {
+  return variaveis.filter((v) => v.mes_referencia === mesAno)
+}
+
+export function totalValor(itens: { valor: number }[]): number {
+  return itens.reduce((acc, i) => acc + i.valor, 0)
+}
+
+export type CategoriaResumo = {
+  categoria: string
+  total: number
+  itens: Variavel[]
+}
+
+/**
+ * Agrupa gastos variáveis por categoria, somando os valores.
+ */
+export function agruparPorCategoria(variaveis: Variavel[]): CategoriaResumo[] {
+  const mapa = new Map<string, Variavel[]>()
+  variaveis.forEach((v) => {
+    const lista = mapa.get(v.categoria) ?? []
+    lista.push(v)
+    mapa.set(v.categoria, lista)
+  })
+  return Array.from(mapa.entries())
+    .map(([categoria, itens]) => ({ categoria, total: totalValor(itens), itens }))
+    .sort((a, b) => b.total - a.total)
+}
+
+/**
+ * Percentual da renda comprometida com fixos + parcelas + variáveis.
+ */
+export function percentualComprometido(ganhos: number, gastos: number): number {
+  if (ganhos <= 0) return 0
+  return Math.round((gastos / ganhos) * 100)
 }
 
 export function getMesesDisponiveis(gastos: Gasto[]): string[] {

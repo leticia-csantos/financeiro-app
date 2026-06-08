@@ -30,3 +30,21 @@ export type Gasto = {
   ativo: boolean
   created_at: string
 }
+
+export type Ganho = {
+  id: string
+  nome: string
+  valor: number
+  recorrente: boolean
+  mes_referencia?: string // 'YYYY-MM', usado quando não é recorrente
+  created_at: string
+}
+
+export type Variavel = {
+  id: string
+  nome: string
+  valor: number
+  categoria: string
+  mes_referencia: string // 'YYYY-MM'
+  created_at: string
+}

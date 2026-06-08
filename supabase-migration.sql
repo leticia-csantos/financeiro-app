@@ -41,3 +41,33 @@ insert into gastos (nome, tipo, valor, vencimento_dia, ativo) values
   ('Dentista', 'recorrente', 47.26, 25, true),
   ('Vivo', 'recorrente', 102.00, 25, true),
   ('Total Pass', 'recorrente', 0, 15, true);
+
+-- Ganhos (renda fixa ou pontual)
+create table if not exists ganhos (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  valor numeric(10,2) not null,
+  recorrente boolean not null default false,
+  mes_referencia text, -- 'YYYY-MM', usado quando não é recorrente
+  created_at timestamptz default now()
+);
+
+alter table ganhos enable row level security;
+
+create policy "acesso_publico" on ganhos
+  for all using (true) with check (true);
+
+-- Gastos variáveis (lançamentos pontuais por categoria)
+create table if not exists variaveis (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  valor numeric(10,2) not null,
+  categoria text not null,
+  mes_referencia text not null, -- 'YYYY-MM'
+  created_at timestamptz default now()
+);
+
+alter table variaveis enable row level security;
+
+create policy "acesso_publico" on variaveis
+  for all using (true) with check (true);
