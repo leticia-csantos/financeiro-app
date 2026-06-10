@@ -18,6 +18,14 @@ import { ptBR } from 'date-fns/locale'
 
 type NovoMenu = null | 'gasto' | 'ganho' | 'variavel'
 
+async function checarResposta(res: Response) {
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    throw new Error(data?.error || 'Erro ao salvar.')
+  }
+  return data
+}
+
 export default function Home() {
   const [gastos, setGastos] = useState<Gasto[]>([])
   const [ganhos, setGanhos] = useState<Ganho[]>([])
@@ -87,11 +95,10 @@ export default function Home() {
 
   // ---- Gasto (parcelado/recorrente) ----
   async function handleSaveGasto(gasto: Omit<Gasto, 'id' | 'created_at'>) {
-    if (editandoGasto) {
-      await fetch('/api/gastos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editandoGasto.id, ...gasto }) })
-    } else {
-      await fetch('/api/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gasto) })
-    }
+    const res = editandoGasto
+      ? await fetch('/api/gastos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editandoGasto.id, ...gasto }) })
+      : await fetch('/api/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gasto) })
+    await checarResposta(res)
     setEditandoGasto(undefined)
     await fetchTudo()
   }
@@ -107,11 +114,10 @@ export default function Home() {
 
   // ---- Ganho ----
   async function handleSaveGanho(ganho: Omit<Ganho, 'id' | 'created_at'>) {
-    if (editandoGanho) {
-      await fetch('/api/ganhos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editandoGanho.id, ...ganho }) })
-    } else {
-      await fetch('/api/ganhos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ganho) })
-    }
+    const res = editandoGanho
+      ? await fetch('/api/ganhos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editandoGanho.id, ...ganho }) })
+      : await fetch('/api/ganhos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ganho) })
+    await checarResposta(res)
     setEditandoGanho(undefined)
     await fetchTudo()
   }
@@ -123,11 +129,10 @@ export default function Home() {
 
   // ---- Variável ----
   async function handleSaveVariavel(variavel: Omit<Variavel, 'id' | 'created_at'>) {
-    if (editandoVariavel) {
-      await fetch('/api/variaveis', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editandoVariavel.id, ...variavel }) })
-    } else {
-      await fetch('/api/variaveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(variavel) })
-    }
+    const res = editandoVariavel
+      ? await fetch('/api/variaveis', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editandoVariavel.id, ...variavel }) })
+      : await fetch('/api/variaveis', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(variavel) })
+    await checarResposta(res)
     setEditandoVariavel(undefined)
     await fetchTudo()
   }
