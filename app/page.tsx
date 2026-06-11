@@ -454,6 +454,60 @@ export default function Home() {
         )}
       </div>
 
+      {/* Fixos do mês */}
+      <div className="animate-fade card" style={{ padding: 20, marginBottom: 20, animationDelay: '0.16s' }}>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, marginBottom: 16 }}>
+          Fixos <span style={{ color: 'var(--red)' }}>do Mês</span>
+        </h3>
+
+        {loading ? (
+          <LoadingRow />
+        ) : fixosMes.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, textAlign: 'center', padding: '12px 0' }}>
+            Nenhum gasto fixo ativo em {nomeMes(mesSelecionado)}
+          </p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  {['NOME', 'VALOR', 'VENC.', 'PAGO', ''].map((h) => (
+                    <th key={h} style={{ textAlign: 'left', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', fontWeight: 500 }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {fixosMes.map((g) => (
+                  <tr key={g.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{ padding: '10px', fontWeight: 500 }}>
+                      {g.nome}
+                      {!!g.tags?.length && (
+                        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                          {g.tags.map((t) => (
+                            <span key={t} className="badge badge-green" style={{ fontWeight: 400 }}>{t}</span>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{ padding: '10px', fontFamily: 'var(--font-mono)', color: 'var(--red)' }}>{formatCurrency(g.valor)}</td>
+                    <td style={{ padding: '10px', color: 'var(--text-muted)' }}>Dia {g.vencimento_dia}</td>
+                    <td style={{ padding: '10px' }}>
+                      <PagoCheckbox pago={g.pago} onToggle={() => togglePagoGasto(g.id, g.pago)} />
+                    </td>
+                    <td style={{ padding: '10px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <button className="btn btn-ghost" style={{ padding: '6px 8px' }} onClick={() => { setEditandoGasto(g); setModalAberto('gasto') }}><Edit2 size={13} /></button>
+                      <button className="btn btn-danger" style={{ padding: '6px 8px', marginLeft: 4 }} onClick={() => handleDeleteGasto(g.id)}><Trash2 size={13} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {/* Parcelas do mês */}
       <div className="animate-fade card" style={{ padding: 20, marginBottom: 20, animationDelay: '0.18s' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
