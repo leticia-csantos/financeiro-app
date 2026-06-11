@@ -91,5 +91,8 @@ alter table pagamentos enable row level security;
 create policy "acesso_publico" on pagamentos
   for all using (true) with check (true);
 
+-- RLS por si só não basta: também é preciso conceder os privilégios na tabela
+grant select, insert, update, delete on table pagamentos to anon, authenticated;
+
 -- Gastos variáveis já são por mês, basta uma coluna direta
 alter table variaveis add column if not exists pago boolean not null default false;
