@@ -66,10 +66,12 @@ export default function Home() {
   const parcelasMes = gastosMes.filter((g) => g.tipo === 'parcelado')
   const ganhosMes = filtrarGanhosPorMes(ganhos, mesSelecionado)
   const variaveisMes = filtrarVariaveisPorMes(variaveis, mesSelecionado)
-  const categorias = agruparPorTag(gastosMes, variaveisMes)
+  const totalFixos = totalMes(fixosMes)
+  const categorias = [...agruparPorTag(gastosMes, variaveisMes)]
+  if (totalFixos > 0) categorias.push({ tag: 'Fixos', total: totalFixos })
+  categorias.sort((a, b) => b.total - a.total)
 
   const totalGanhos = totalValor(ganhosMes)
-  const totalFixos = totalMes(fixosMes)
   const totalParcelas = totalMes(parcelasMes)
   const totalVariaveis = totalValor(variaveisMes)
   const totalSaidas = totalFixos + totalParcelas + totalVariaveis
