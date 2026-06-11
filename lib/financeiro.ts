@@ -1,10 +1,11 @@
-import { Gasto, Ganho, Variavel } from './supabase'
+import { Gasto, Ganho, Variavel, Pagamento } from './supabase'
 import { addMonths, parse, format, isAfter, isBefore, startOfMonth } from 'date-fns'
 
 export type GastoMes = Gasto & {
   parcela_atual?: number
   mes_termino?: string
   aplicavel: boolean
+  pago?: boolean
 }
 
 /**
@@ -49,6 +50,24 @@ export function filtrarGastosPorMes(gastos: Gasto[], mesAno: string): GastoMes[]
 
 export function totalMes(gastos: GastoMes[]): number {
   return gastos.reduce((acc, g) => acc + g.valor, 0)
+}
+
+/**
+ * Aplica o status de "pago" (registrado na tabela pagamentos, por gasto + mês)
+ * a uma lista de gastos já filtrados para um mês específico.
+ */
+export function aplicarPagamentos(gastos: GastoMes[], pagamentos: Pagamento[], mesAno: string): GastoMes[] {
+  const mapa = new Map(
+    pagamentos.filter((p) => p.mes_referencia === mesAno).map((p) => [p.gasto_id, p.pago])
+  )
+  return gastos.map((g) => ({ ...g, pago: mapa.get(g.id) ?? false }))
+}
+
+/**
+ * Soma o valor dos itens marcados como pagos.
+ */
+export function totalPago(itens: { valor: number; pago?: boolean }[]): number {
+  return itens.reduce((acc, i) => acc + (i.pago ? i.valor : 0), 0)
 }
 
 export function formatCurrency(value: number): string {

@@ -76,3 +76,20 @@ alter table variaveis enable row level security;
 
 create policy "acesso_publico" on variaveis
   for all using (true) with check (true);
+
+-- Status de pagamento por gasto (fixo/parcela) + mês
+create table if not exists pagamentos (
+  gasto_id uuid not null references gastos(id) on delete cascade,
+  mes_referencia text not null, -- 'YYYY-MM'
+  pago boolean not null default false,
+  updated_at timestamptz default now(),
+  primary key (gasto_id, mes_referencia)
+);
+
+alter table pagamentos enable row level security;
+
+create policy "acesso_publico" on pagamentos
+  for all using (true) with check (true);
+
+-- Gastos variáveis já são por mês, basta uma coluna direta
+alter table variaveis add column if not exists pago boolean not null default false;

@@ -2,13 +2,13 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   Plus, Trash2, RefreshCw, ChevronLeft, ChevronRight, Edit2, ToggleLeft, ToggleRight,
-  TrendingUp, Lock, CreditCard, ShoppingCart, Wallet, X,
+  TrendingUp, Lock, CreditCard, ShoppingCart, Wallet, X, CheckSquare, Square,
 } from 'lucide-react'
-import { Gasto, Ganho, Variavel } from '@/lib/supabase'
+import { Gasto, Ganho, Variavel, Pagamento } from '@/lib/supabase'
 import {
   filtrarGastosPorMes, filtrarGanhosPorMes, filtrarVariaveisPorMes,
   totalMes, totalValor, formatCurrency, agruparPorTag, percentualComprometido,
-  GastoMes, getMesesDisponiveis,
+  GastoMes, getMesesDisponiveis, aplicarPagamentos, totalPago,
 } from '@/lib/financeiro'
 import GastoModal from '@/components/GastoModal'
 import GanhoModal from '@/components/GanhoModal'
@@ -30,6 +30,7 @@ export default function Home() {
   const [gastos, setGastos] = useState<Gasto[]>([])
   const [ganhos, setGanhos] = useState<Ganho[]>([])
   const [variaveis, setVariaveis] = useState<Variavel[]>([])
+  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [loading, setLoading] = useState(true)
   const [mesSelecionado, setMesSelecionado] = useState(() => format(new Date(), 'yyyy-MM'))
 
@@ -44,21 +45,23 @@ export default function Home() {
 
   const fetchTudo = useCallback(async () => {
     setLoading(true)
-    const [rGastos, rGanhos, rVariaveis] = await Promise.all([
+    const [rGastos, rGanhos, rVariaveis, rPagamentos] = await Promise.all([
       fetch('/api/gastos'),
       fetch('/api/ganhos'),
       fetch('/api/variaveis'),
+      fetch('/api/pagamentos'),
     ])
-    const [dGastos, dGanhos, dVariaveis] = await Promise.all([rGastos.json(), rGanhos.json(), rVariaveis.json()])
+    const [dGastos, dGanhos, dVariaveis, dPagamentos] = await Promise.all([rGastos.json(), rGanhos.json(), rVariaveis.json(), rPagamentos.json()])
     setGastos(Array.isArray(dGastos) ? dGastos : [])
     setGanhos(Array.isArray(dGanhos) ? dGanhos : [])
     setVariaveis(Array.isArray(dVariaveis) ? dVariaveis : [])
+    setPagamentos(Array.isArray(dPagamentos) ? dPagamentos : [])
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchTudo() }, [fetchTudo])
 
-  const gastosMes = filtrarGastosPorMes(gastos, mesSelecionado)
+  const gastosMes = aplicarPagamentos(filtrarGastosPorMes(gastos, mesSelecionado), pagamentos, mesSelecionado)
   const fixosMes = gastosMes.filter((g) => g.tipo === 'recorrente')
   const parcelasMes = gastosMes.filter((g) => g.tipo === 'parcelado')
   const ganhosMes = filtrarGanhosPorMes(ganhos, mesSelecionado)
@@ -70,6 +73,8 @@ export default function Home() {
   const totalParcelas = totalMes(parcelasMes)
   const totalVariaveis = totalValor(variaveisMes)
   const totalSaidas = totalFixos + totalParcelas + totalVariaveis
+  const totalPagoMes = totalPago(fixosMes) + totalPago(parcelasMes) + totalPago(variaveisMes)
+  const totalAPagar = totalSaidas - totalPagoMes
   const saldo = totalGanhos - totalSaidas
   const percentual = percentualComprometido(totalGanhos, totalSaidas)
 
@@ -109,6 +114,17 @@ export default function Home() {
   }
   async function toggleAtivoGasto(g: Gasto) {
     await fetch('/api/gastos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: g.id, ativo: !g.ativo }) })
+    await fetchTudo()
+  }
+  async function togglePagoGasto(gastoId: string, pagoAtual?: boolean) {
+    await fetch('/api/pagamentos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gasto_id: gastoId, mes_referencia: mesSelecionado, pago: !pagoAtual }) })
+    await fetchTudo()
+  }
+  function pagoDoGasto(gastoId: string): boolean {
+    return pagamentos.find((p) => p.gasto_id === gastoId && p.mes_referencia === mesSelecionado)?.pago ?? false
+  }
+  async function togglePagoVariavel(v: Variavel) {
+    await fetch('/api/variaveis', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: v.id, pago: !v.pago }) })
     await fetchTudo()
   }
 
@@ -282,7 +298,7 @@ export default function Home() {
           {percentual}% da renda comprometida
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: 28, marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: 28, marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
               total de entradas
@@ -298,6 +314,15 @@ export default function Home() {
             </p>
             <p style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 500, color: 'var(--red)' }}>
               {formatCurrency(totalSaidas)}
+            </p>
+          </div>
+          <div style={{ width: 1, background: 'var(--border)' }} />
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+              falta pagar
+            </p>
+            <p style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 500, color: 'var(--yellow)' }}>
+              {formatCurrency(totalAPagar)}
             </p>
           </div>
         </div>
@@ -370,6 +395,7 @@ export default function Home() {
                     </div>
                     <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>dia {g.vencimento_dia} · {formatCurrency(g.valor)}/mês</p>
                   </div>
+                  {g.ativo && <PagoCheckbox pago={pagoDoGasto(g.id)} onToggle={() => togglePagoGasto(g.id, pagoDoGasto(g.id))} />}
                   <button className="btn btn-ghost" style={{ padding: '6px 8px' }} onClick={() => toggleAtivoGasto(g)}>
                     {g.ativo ? <ToggleRight size={18} style={{ color: 'var(--green)' }} /> : <ToggleLeft size={18} />}
                   </button>
@@ -392,6 +418,7 @@ export default function Home() {
                     </div>
                   </div>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--blue)', whiteSpace: 'nowrap' }}>{formatCurrency(v.valor)}</span>
+                  <PagoCheckbox pago={v.pago} onToggle={() => togglePagoVariavel(v)} />
                   <button className="btn btn-ghost" style={{ padding: '6px 8px' }} onClick={() => { setEditandoVariavel(v); setModalAberto('variavel') }}><Edit2 size={13} /></button>
                   <button className="btn btn-danger" style={{ padding: '6px 8px' }} onClick={() => handleDeleteVariavel(v.id)}><Trash2 size={13} /></button>
                 </div>
@@ -449,7 +476,7 @@ export default function Home() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  {['NOME', 'PARCELA', 'VALOR', 'VENC.', ''].map((h) => (
+                  {['NOME', 'PARCELA', 'VALOR', 'VENC.', 'PAGO', ''].map((h) => (
                     <th key={h} style={{ textAlign: 'left', padding: '8px 10px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', letterSpacing: '0.06em', fontWeight: 500 }}>
                       {h}
                     </th>
@@ -480,6 +507,13 @@ export default function Home() {
                       </td>
                       <td style={{ padding: '10px', fontFamily: 'var(--font-mono)', color: 'var(--red)' }}>{formatCurrency(g.valor)}</td>
                       <td style={{ padding: '10px', color: 'var(--text-muted)' }}>Dia {g.vencimento_dia}</td>
+                      <td style={{ padding: '10px' }}>
+                        {verTodasParcelas ? (
+                          <span style={{ color: 'var(--text-muted)' }}>-</span>
+                        ) : (
+                          <PagoCheckbox pago={gm.pago} onToggle={() => togglePagoGasto(g.id, gm.pago)} />
+                        )}
+                      </td>
                       <td style={{ padding: '10px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <button className="btn btn-ghost" style={{ padding: '6px 8px' }} onClick={() => { setEditandoGasto(g); setModalAberto('gasto') }}><Edit2 size={13} /></button>
                         <button className="btn btn-danger" style={{ padding: '6px 8px', marginLeft: 4 }} onClick={() => handleDeleteGasto(g.id)}><Trash2 size={13} /></button>
@@ -535,5 +569,18 @@ function EmptyRow({ texto }: { texto: string }) {
     <div className="card" style={{ padding: 20, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
       {texto}
     </div>
+  )
+}
+
+function PagoCheckbox({ pago, onToggle }: { pago?: boolean; onToggle: () => void }) {
+  return (
+    <button
+      className="btn btn-ghost"
+      style={{ padding: '6px 8px', color: pago ? 'var(--green)' : 'var(--text-muted)' }}
+      title={pago ? 'Marcar como não pago' : 'Marcar como pago'}
+      onClick={onToggle}
+    >
+      {pago ? <CheckSquare size={16} /> : <Square size={16} />}
+    </button>
   )
 }

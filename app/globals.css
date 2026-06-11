@@ -19,7 +19,7 @@
   --red: #f87171;
   --red-dim: #7f1d1d;
   --yellow: #fbbf24;
-  --blue: #60a5fa;
+  --blue: #f472b6;
   --font-display: 'DM Serif Display', serif;
   --font-body: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
@@ -96,7 +96,7 @@ body {
 .badge-green { background: var(--green-dim); color: var(--green); }
 .badge-red { background: var(--red-dim); color: var(--red); }
 .badge-yellow { background: rgba(251,191,36,0.15); color: var(--yellow); }
-.badge-blue { background: rgba(96,165,250,0.12); color: var(--blue); }
+.badge-blue { background: rgba(244,114,182,0.12); color: var(--blue); }
 
 /* btn */
 .btn {

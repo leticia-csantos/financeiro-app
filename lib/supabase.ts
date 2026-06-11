@@ -48,5 +48,12 @@ export type Variavel = {
   valor: number
   categoria: string
   mes_referencia: string // 'YYYY-MM'
+  pago?: boolean
   created_at: string
+}
+
+export type Pagamento = {
+  gasto_id: string
+  mes_referencia: string // 'YYYY-MM'
+  pago: boolean
 }
